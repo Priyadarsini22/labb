@@ -1,3 +1,140 @@
+#heapsort
+#include<stdio.h>
+#include<time.h>
+
+void heapify(int h[], int n, int i) {
+    int largest = i;
+    int left = 2 * i;
+    int right = 2 * i + 1;
+
+    if (left <= n && h[left] > h[largest])
+        largest = left;
+
+    if (right <= n && h[right] > h[largest])
+        largest = right;
+
+    if (largest != i) {
+        int temp = h[i];
+        h[i] = h[largest];
+        h[largest] = temp;
+        heapify(h, n, largest);
+    }
+}
+
+void heapSort(int h[], int n) {
+    for (int i = n / 2; i >= 1; i--)
+        heapify(h, n, i);
+
+    for (int i = n; i > 1; i--) {
+        int temp = h[1];
+        h[1] = h[i];
+        h[i] = temp;
+        heapify(h, i - 1, 1);
+    }
+}
+
+int main() {
+    int h[20], n;
+    double clk;
+    clock_t starttime, endtime;
+
+    printf("\nEnter the number of resumes: ");
+    scanf("%d", &n);
+
+    printf("\nThe candidates' ranks are:\n");
+    for (int i = 1; i <= n; i++) {
+        h[i] = rand() % 100;
+        printf("%d ", h[i]);
+    }
+
+    starttime = clock();
+    heapSort(h, n);
+    endtime = clock();
+    clk = (double)(endtime - starttime) / CLOCKS_PER_SEC;
+
+    printf("\nThe ranks in sorted order:\n");
+    for (int i = 1; i <= n; i++)
+        printf("%d ", h[i]);
+
+    printf("\nThe run time is %f\n", clk);
+
+    return 0;
+}
+
+
+#horspool
+#include <stdio.h>
+#include <string.h>
+
+#define MAX 500
+int t[MAX];
+
+void shifttable(char p[]) {
+    int i, j, m;
+    m = strlen(p);
+    for (i = 0; i < MAX; i++) {
+        t[i] = m;
+    }
+    for (j = 0; j < m - 1; j++) {
+        t[(unsigned char)p[j]] = m - 1 - j;
+    }
+}
+
+int horspool(char src[], char p[]) {
+    int i, k, m, n;
+    n = strlen(src);
+    m = strlen(p);
+    printf("\nLength of text = %d", n);
+    printf("\nLength of pattern = %d", m);
+    i = m - 1;
+    while (i < n) {
+        k = 0;
+        while ((k < m) && (p[m - 1 - k] == src[i - k])) {
+            k++;
+        }
+        if (k == m) {
+            return i - m + 1;
+        } else {
+            i += t[(unsigned char)src[i]];
+        }
+    }
+    return -1;
+}
+
+int main() {
+    char src[100], p[100];
+    int pos;
+    printf("Enter the text in which pattern is to be searched:\n");
+    fgets(src, sizeof(src), stdin);
+    src[strcspn(src, "\n")] = '\0'; // Remove trailing newline character
+    printf("Enter the pattern to be searched:\n");
+    fgets(p, sizeof(p), stdin);
+    p[strcspn(p, "\n")] = '\0'; // Remove trailing newline character
+    shifttable(p);
+    pos = horspool(src, p);
+    if (pos >= 0) {
+        printf("\nThe desired pattern was found starting from position %d\n", pos + 1);
+    } else {
+        printf("\nThe pattern was not found in the given text\n");
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # labb
 #include <stdio.h>
 #include <time.h>
