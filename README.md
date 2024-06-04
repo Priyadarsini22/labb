@@ -432,4 +432,61 @@ int main() {
 }
 
 
+#dfs
+#include <stdio.h>
+#include <time.h>
+
+#define MAX 50
+
+int n, a[MAX][MAX], visited[MAX];
+
+void DFS(int v);
+
+int main() {
+    int v;
+    double clk;
+    clock_t starttime, endtime;
+
+    printf("\n\t\t\t DEPTH FIRST SEARCH \n");
+    printf("\n Enter number of Lands to be surveyed: ");
+    scanf("%d", &n);
+
+    for (int i = 0; i < n; i++) {
+        visited[i] = 0;
+    }
+
+    printf("\n Enter the adjacency matrix (%d x %d) row-wise (0/1):\n", n, n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            scanf("%d", &a[i][j]);
+        }
+    }
+
+    printf("\n Enter the starting Land number: ");
+    scanf("%d", &v);
+    v = v - 1;
+
+    starttime = clock();
+    printf("The DFS traversal is:\n");
+    DFS(v);
+    endtime = clock();
+
+    clk = (double)(endtime - starttime) / CLOCKS_PER_SEC;
+
+    printf("\nThe run time is %f seconds\n", clk);
+
+    return 0;
+}
+
+void DFS(int i) {
+    printf("%d ", i + 1);
+    visited[i] = 1;
+    for (int j = 0; j < n; j++) {
+        if (a[i][j] == 1 && !visited[j]) {
+            DFS(j);
+        }
+    }
+}
+
+
 
