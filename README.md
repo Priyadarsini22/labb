@@ -1,3 +1,155 @@
+
+
+
+#include<stdio.h>
+#include<time.h>
+double clk;
+clock_t starttime,endtime;
+
+int min(int a,int b)
+{
+	if(a<b)
+	return a;
+	else
+	return b;
+}
+
+void floyd(int n,int W[10][10],int D[10][10])
+{
+   	int i,j,k;
+	for(i=0;i<n;i++)
+	for(j=0;j<n;j++)
+	D[i][j]=W[i][j];
+	for(k=0;k<n;k++)
+	{
+		for(i=0;i<n;i++)
+		{
+			for(j=0;j<n;j++)
+			{
+				D[i][j]=min(D[i][j],D[i][k]+D[k][j]);
+			}
+		}
+	}
+}
+
+void main()
+{
+	int i,j,n,D[10][10],W[10][10];
+	printf("Enter no.of vertices: \n");
+	scanf("%d",&n);
+	printf("Enter the cost matrix: \n");
+	for(i=0;i<n;i++)
+	for(j=0;j<n;j++)
+	scanf("%d",&W[i][j]);
+	starttime=clock();
+            floyd(n,W,D);	
+endtime=clock();
+clk=(double)(endtime-starttime)/CLOCKS_PER_SEC;
+ printf("All pair shortest path matrix is\n");
+	for(i=0;i<n;i++)
+	{
+		for(j=0;j<n;j++)
+		{
+			printf("%d\t",D[i][j]);
+		}
+	}
+   printf("\nThe run time is %f\n",clk);
+}
+
+
+
+
+
+
+
+
+
+#include <stdio.h>
+#include <time.h>
+
+// Function declarations
+int max(int x, int y);
+int knap(int n, int w[], int value[], int m, int v[][10]);
+
+int main() {
+    clock_t starttime, endtime;
+    double clk;
+    int v[10][10], n, i, j, w[10], value[10], m, result;
+
+    printf("Enter the number of items:");
+    scanf("%d", &n);
+
+    printf("Enter the weights of %d items:\n", n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &w[i]);
+    }
+
+    printf("Enter the value of %d items:\n", n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &value[i]);
+    }
+
+    printf("Enter the capacity of the knapsack:");
+    scanf("%d", &m);
+
+    // Initialize the table v
+    for (i = 0; i <= n; i++) {
+        for (j = 0; j <= m; j++) {
+            v[i][j] = 0;
+        }
+    }
+
+    starttime = clock();
+    result = knap(n, w, value, m, v);
+    endtime = clock();
+    clk = (double)(endtime - starttime) / CLOCKS_PER_SEC;
+
+    printf("Optimal solution for the knapsack problem is %d\n", v[n][m]);
+    printf("Time taken: %f seconds\n", clk);
+
+    return 0;
+}
+
+// Function to find maximum of two integers
+int max(int x, int y) {
+    return (x > y) ? x : y;
+}
+
+// Function to solve knapsack problem using dynamic programming
+int knap(int n, int w[], int value[], int m, int v[][10]) {
+    int i, j;
+
+    for (i = 0; i <= n; i++) {
+        for (j = 0; j <= m; j++) {
+            if (i == 0 || j == 0)
+                v[i][j] = 0;
+            else if (j < w[i - 1])
+                v[i][j] = v[i - 1][j];
+            else
+                v[i][j] = max(v[i - 1][j], value[i - 1] + v[i - 1][j - w[i - 1]]);
+        }
+    }
+
+    // Print the table for solving knapsack problem
+    printf("\nThe table for solving knapsack problem using dynamic programming is:\n");
+    for (i = 0; i <= n; i++) {
+        for (j = 0; j <= m; j++) {
+            printf("%d\t", v[i][j]);
+        }
+        printf("\n");
+    }
+
+    return v[n][m];
+}
+
+
+
+
+
+
+
+
+
 #binary search
 #include <stdio.h>
 #include <stdlib.h>
