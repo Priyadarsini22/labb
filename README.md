@@ -1,3 +1,207 @@
+#include <stdio.h>
+#include <time.h>
+
+struct edge {
+    int u, v, cost;
+};
+typedef struct edge edge;
+
+int find(int v, int parent[], int n) {
+    if (v < 0 || v >= n) return -1; // Check bounds
+    while (parent[v] != v) {
+        v = parent[v];
+    }
+    return v;
+}
+
+void unionij(int i, int j, int parent[], int n) {
+    if (i < 0 || i >= n || j < 0 || j >= n) return; // Check bounds
+    if (i < j)
+        parent[j] = i;
+    else
+        parent[i] = j;
+}
+
+void kruskal(int n, edge e[], int m) {
+    int count = 0, k = 0, sum = 0, u, v, i, j, p;
+    int t[20][2], parent[20]; // Ensure these arrays are large enough
+    edge temp;
+
+    // Sort the edges based on the cost
+    for (i = 0; i < m; i++) {
+        for (j = 0; j < m - 1; j++) {
+            if (e[j].cost > e[j + 1].cost) {
+                temp = e[j];
+                e[j] = e[j + 1];
+                e[j + 1] = temp;
+            }
+        }
+    }
+
+    // Initialize parent array
+    for (i = 0; i < n; i++) {
+        parent[i] = i;
+    }
+
+    p = 0;
+    while (count != n - 1 && p < m) { // Ensure p does not exceed the number of edges
+        u = e[p].u;
+        v = e[p].v;
+        i = find(u, parent, n);
+        j = find(v, parent, n);
+
+        if (i != j && i != -1 && j != -1) { // Ensure valid indices
+            t[k][0] = u;
+            t[k][1] = v;
+            k++;
+            count++;
+            sum += e[p].cost;
+            unionij(i, j, parent, n);
+        }
+        p++;
+    }
+
+    if (count == n - 1) {
+        printf("Spanning tree exists\n");
+        printf("The spanning tree is as follows:\n");
+        for (i = 0; i < n - 1; i++) {
+            printf("%d  %d\n", t[i][0], t[i][1]);
+        }
+        printf("The cost of the spanning tree is %d\n", sum);
+    } else {
+        printf("\nSpanning tree does not exist\n");
+    }
+}
+
+int main() {
+    int n, m, a, b, i, cost;
+    double clk;
+    clock_t starttime, endtime;
+    edge e[20];
+
+    printf("Enter the number of vertices: ");
+    scanf("%d", &n);
+    if (n > 20) { // Ensure n does not exceed array bounds
+        printf("Number of vertices exceeds the limit of 20.\n");
+        return 1;
+    }
+    
+    printf("Enter the number of edges: ");
+    scanf("%d", &m);
+    if (m > 20) { // Ensure m does not exceed array bounds
+        printf("Number of edges exceeds the limit of 20.\n");
+        return 1;
+    }
+    
+    printf("Enter the edge list (u v cost):\n");
+
+    for (i = 0; i < m; i++) {
+        scanf("%d %d %d", &a, &b, &cost);
+        if (a < 0 || a >= n || b < 0 || b >= n) {
+            printf("Invalid vertex input.\n");
+            return 1;
+        }
+        e[i].u = a;
+        e[i].v = b;
+        e[i].cost = cost;
+    }
+
+    starttime = clock();
+    kruskal(n, e, m);
+    endtime = clock();
+
+    clk = (double)(endtime - starttime) / CLOCKS_PER_SEC;
+    printf("The time taken is %f seconds\n", clk);
+
+    return 0;
+}
+
+
+
+
+
+#include<stdio.h>
+#include<time.h>
+
+#define MAX 10
+#define INF 999
+
+int choose(int dist[], int s[], int n) {
+    int j = 1, min = INF, w;
+    for (w = 1; w <= n; w++) {
+        if (dist[w] < min && s[w] == 0) {
+            min = dist[w];
+            j = w;
+        }
+    }
+    return j;
+}
+
+void spath(int v, int cost[][MAX], int dist[], int n) {
+    int w, u, i, num, s[MAX];
+    for (i = 1; i <= n; i++) {
+        s[i] = 0;
+        dist[i] = cost[v][i];
+    }
+    s[v] = 1;
+    dist[v] = 0;
+
+    for (num = 2; num <= n; num++) {
+        u = choose(dist, s, n);
+        s[u] = 1;
+        for (w = 1; w <= n; w++) {
+            if ((dist[u] + cost[u][w]) < dist[w] && !s[w]) {
+                dist[w] = dist[u] + cost[u][w];
+            }
+        }
+    }
+}
+
+void main() {
+    int i, j, cost[MAX][MAX], dist[MAX], n, v;
+    double clk;
+    clock_t starttime, endtime;
+
+    printf("\nEnter number of vertices: ");
+    scanf("%d", &n);
+    printf("\nEnter the cost of adjacency matrix (enter %d for infinity)\n", INF);
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= n; j++) {
+            scanf("%d", &cost[i][j]);
+        }
+    }
+    printf("\nEnter the source vertex: ");
+    scanf("%d", &v);
+
+    starttime = clock();
+    spath(v, cost, dist, n);
+    endtime = clock();
+
+    printf("\nShortest distance\n");
+    for (i = 1; i <= n; i++) {
+        if (dist[i] == INF) {
+            printf("\n%d to %d = INF", v, i);
+        } else {
+            printf("\n%d to %d = %d", v, i, dist[i]);
+        }
+    }
+    clk = (double)(endtime - starttime) / CLOCKS_PER_SEC;
+    printf("\nThe time taken is %f seconds\n", clk);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
