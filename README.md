@@ -1,3 +1,114 @@
+#subset
+#include <stdio.h>
+
+int count, w[10], d, x[10];
+
+void subset(int cs, int k, int r, int n) {
+    int i;
+
+    // Try including w[k] in the current subset
+    x[k] = 1;
+    if ((cs + w[k]) == d) { // If current subset sum is equal to the required sum
+        printf("\nSubset solution = %d\n", ++count);
+        for (i = 0; i <= k; i++) {
+            if (x[i] == 1)
+                printf("%d ", w[i]);
+        }
+        printf("\n");
+    } else if ((cs + w[k] < d) && (k + 1 < n)) { // Include w[k] if it doesn't exceed the sum and within bounds
+        subset(cs + w[k], k + 1, r - w[k], n);
+    }
+
+    // Try excluding w[k] from the current subset
+    if ((cs + r - w[k] >= d) && (k + 1 < n)) { // Exclude w[k] if it still leaves a possibility of a solution and within bounds
+        x[k] = 0;
+        subset(cs, k + 1, r - w[k], n);
+    }
+}
+
+int main(void) {
+    int sum = 0, i, n;
+    printf("Enter the number of elements: ");
+    scanf("%d", &n);
+
+    if (n > 10) { // Ensure n does not exceed the array size
+        printf("Number of elements exceeds the allowed maximum of 10.\n");
+        return 1;
+    }
+
+    printf("Enter the elements in ascending order:\n");
+    for (i = 0; i < n; i++) {
+        scanf("%d", &w[i]);
+        sum += w[i];
+    }
+
+    printf("Enter the required sum: ");
+    scanf("%d", &d);
+
+    if (sum < d) {
+        printf("No solution exists.\n");
+    } else {
+        printf("The solution is:\n");
+        count = 0;
+        subset(0, 0, sum, n);
+    }
+
+    return 0;
+}
+
+N Queens
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define MAX_N 20
+
+int x[MAX_N];
+
+bool place(int k, int i) {
+    for (int j = 0; j < k; j++) {
+        if (x[j] == i || abs(x[j] - i) == abs(j - k)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void nqueens(int k, int n) {
+    for (int i = 0; i < n; i++) {
+        if (place(k, i)) {
+            x[k] = i;
+            if (k == n - 1) {
+                for (int a = 0; a < n; a++) {
+                    printf("%d\t", x[a] + 1);
+                }
+                printf("\n");
+            } else {
+                nqueens(k + 1, n);
+            }
+        }
+    }
+}
+
+int main(void) {
+    int n;
+
+    printf("Enter the number of queens: ");
+    if (scanf("%d", &n) != 1 || n < 1 || n > MAX_N) {
+        printf("Invalid input. Please enter a number between 1 and %d.\n", MAX_N);
+        return 1;
+    }
+
+    printf("The solution to the N-Queens problem is:\n");
+    nqueens(0, n);
+
+    return 0;
+}
+
+
+
+
 #include <stdio.h>
 #include <time.h>
 
