@@ -1,374 +1,299 @@
-#subset
-#include <stdio.h>
+PROGRAM1:
 
-int count, w[10], d, x[10];
+CODE:
 
-void subset(int cs, int k, int r, int n) {
-    int i;
+set ns [new Simulator]
 
-    // Try including w[k] in the current subset
-    x[k] = 1;
-    if ((cs + w[k]) == d) { // If current subset sum is equal to the required sum
-        printf("\nSubset solution = %d\n", ++count);
-        for (i = 0; i <= k; i++) {
-            if (x[i] == 1)
-                printf("%d ", w[i]);
-        }
-        printf("\n");
-    } else if ((cs + w[k] < d) && (k + 1 < n)) { // Include w[k] if it doesn't exceed the sum and within bounds
-        subset(cs + w[k], k + 1, r - w[k], n);
-    }
+set tf [open p1.tr w]
+$ns trace-all $tf
 
-    // Try excluding w[k] from the current subset
-    if ((cs + r - w[k] >= d) && (k + 1 < n)) { // Exclude w[k] if it still leaves a possibility of a solution and within bounds
-        x[k] = 0;
-        subset(cs, k + 1, r - w[k], n);
-    }
+set nf [open p1.nam w]
+$ns namtrace-all $nf
+
+set n0 [$ns node]
+set n1 [$ns node]
+set n2 [$ns node]
+set n3 [$ns node]
+
+$ns duplex-link $n0 $n2 2Mb 2ms DropTail
+$ns duplex-link $n1 $n2 2Mb 2ms DropTail
+$ns duplex-link $n2 $n3 0.4Mb 10ms DropTail
+$ns queue-limit $n2 $n3 5
+
+set udp1 [new Agent/UDP]
+$ns attach-agent $n0 $udp1
+set null1 [new Agent/Null]
+$ns attach-agent $n3 $null1
+$ns connect $udp1 $null1
+set cbr1 [new Application/Traffic/CBR]
+$cbr1 attach-agent $udp1
+$ns at 1.1 "$cbr1 start"
+set tcp1 [new Agent/TCP]
+$ns attach-agent $n1 $tcp1
+set sink1 [new Agent/TCPSink]
+$ns attach-agent $n3 $sink1
+$ns connect $tcp1 $sink1
+set ftp1 [new Application/FTP]
+$ftp1 attach-agent $tcp1
+$ns at 0.1 "$ftp1 start"
+$ns at 10.0 "finish"
+proc finish {} {
+global ns tf nf
+$ns flush-trace
+close $tf
+close $nf
+puts "running nam..."
+exec nam p1.nam &
+exit 0
 }
+$ns run
 
-int main(void) {
-    int sum = 0, i, n;
-    printf("Enter the number of elements: ");
-    scanf("%d", &n);
-
-    if (n > 10) { // Ensure n does not exceed the array size
-        printf("Number of elements exceeds the allowed maximum of 10.\n");
-        return 1;
-    }
-
-    printf("Enter the elements in ascending order:\n");
-    for (i = 0; i < n; i++) {
-        scanf("%d", &w[i]);
-        sum += w[i];
-    }
-
-    printf("Enter the required sum: ");
-    scanf("%d", &d);
-
-    if (sum < d) {
-        printf("No solution exists.\n");
-    } else {
-        printf("The solution is:\n");
-        count = 0;
-        subset(0, 0, sum, n);
-    }
-
-    return 0;
+BEGIN{
+tcp_count=0;
+udp_count=0;
 }
-
-N Queens
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-
-#define MAX_N 20
-
-int x[MAX_N];
-
-bool place(int k, int i) {
-    for (int j = 0; j < k; j++) {
-        if (x[j] == i || abs(x[j] - i) == abs(j - k)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-void nqueens(int k, int n) {
-    for (int i = 0; i < n; i++) {
-        if (place(k, i)) {
-            x[k] = i;
-            if (k == n - 1) {
-                for (int a = 0; a < n; a++) {
-                    printf("%d\t", x[a] + 1);
-                }
-                printf("\n");
-            } else {
-                nqueens(k + 1, n);
-            }
-        }
-    }
-}
-
-int main(void) {
-    int n;
-
-    printf("Enter the number of queens: ");
-    if (scanf("%d", &n) != 1 || n < 1 || n > MAX_N) {
-        printf("Invalid input. Please enter a number between 1 and %d.\n", MAX_N);
-        return 1;
-    }
-
-    printf("The solution to the N-Queens problem is:\n");
-    nqueens(0, n);
-
-    return 0;
-}
-
-
-
-
-#include <stdio.h>
-#include <time.h>
-
-struct edge {
-    int u, v, cost;
-};
-typedef struct edge edge;
-
-int find(int v, int parent[], int n) {
-    if (v < 0 || v >= n) return -1; // Check bounds
-    while (parent[v] != v) {
-        v = parent[v];
-    }
-    return v;
-}
-
-void unionij(int i, int j, int parent[], int n) {
-    if (i < 0 || i >= n || j < 0 || j >= n) return; // Check bounds
-    if (i < j)
-        parent[j] = i;
-    else
-        parent[i] = j;
-}
-
-void kruskal(int n, edge e[], int m) {
-    int count = 0, k = 0, sum = 0, u, v, i, j, p;
-    int t[20][2], parent[20]; // Ensure these arrays are large enough
-    edge temp;
-
-    // Sort the edges based on the cost
-    for (i = 0; i < m; i++) {
-        for (j = 0; j < m - 1; j++) {
-            if (e[j].cost > e[j + 1].cost) {
-                temp = e[j];
-                e[j] = e[j + 1];
-                e[j + 1] = temp;
-            }
-        }
-    }
-
-    // Initialize parent array
-    for (i = 0; i < n; i++) {
-        parent[i] = i;
-    }
-
-    p = 0;
-    while (count != n - 1 && p < m) { // Ensure p does not exceed the number of edges
-        u = e[p].u;
-        v = e[p].v;
-        i = find(u, parent, n);
-        j = find(v, parent, n);
-
-        if (i != j && i != -1 && j != -1) { // Ensure valid indices
-            t[k][0] = u;
-            t[k][1] = v;
-            k++;
-            count++;
-            sum += e[p].cost;
-            unionij(i, j, parent, n);
-        }
-        p++;
-    }
-
-    if (count == n - 1) {
-        printf("Spanning tree exists\n");
-        printf("The spanning tree is as follows:\n");
-        for (i = 0; i < n - 1; i++) {
-            printf("%d  %d\n", t[i][0], t[i][1]);
-        }
-        printf("The cost of the spanning tree is %d\n", sum);
-    } else {
-        printf("\nSpanning tree does not exist\n");
-    }
-}
-
-int main() {
-    int n, m, a, b, i, cost;
-    double clk;
-    clock_t starttime, endtime;
-    edge e[20];
-
-    printf("Enter the number of vertices: ");
-    scanf("%d", &n);
-    if (n > 20) { // Ensure n does not exceed array bounds
-        printf("Number of vertices exceeds the limit of 20.\n");
-        return 1;
-    }
-    
-    printf("Enter the number of edges: ");
-    scanf("%d", &m);
-    if (m > 20) { // Ensure m does not exceed array bounds
-        printf("Number of edges exceeds the limit of 20.\n");
-        return 1;
-    }
-    
-    printf("Enter the edge list (u v cost):\n");
-
-    for (i = 0; i < m; i++) {
-        scanf("%d %d %d", &a, &b, &cost);
-        if (a < 0 || a >= n || b < 0 || b >= n) {
-            printf("Invalid vertex input.\n");
-            return 1;
-        }
-        e[i].u = a;
-        e[i].v = b;
-        e[i].cost = cost;
-    }
-
-    starttime = clock();
-    kruskal(n, e, m);
-    endtime = clock();
-
-    clk = (double)(endtime - starttime) / CLOCKS_PER_SEC;
-    printf("The time taken is %f seconds\n", clk);
-
-    return 0;
-}
-
-
-
-
-
-#include<stdio.h>
-#include<time.h>
-
-#define MAX 10
-#define INF 999
-
-int choose(int dist[], int s[], int n) {
-    int j = 1, min = INF, w;
-    for (w = 1; w <= n; w++) {
-        if (dist[w] < min && s[w] == 0) {
-            min = dist[w];
-            j = w;
-        }
-    }
-    return j;
-}
-
-void spath(int v, int cost[][MAX], int dist[], int n) {
-    int w, u, i, num, s[MAX];
-    for (i = 1; i <= n; i++) {
-        s[i] = 0;
-        dist[i] = cost[v][i];
-    }
-    s[v] = 1;
-    dist[v] = 0;
-
-    for (num = 2; num <= n; num++) {
-        u = choose(dist, s, n);
-        s[u] = 1;
-        for (w = 1; w <= n; w++) {
-            if ((dist[u] + cost[u][w]) < dist[w] && !s[w]) {
-                dist[w] = dist[u] + cost[u][w];
-            }
-        }
-    }
-}
-
-void main() {
-    int i, j, cost[MAX][MAX], dist[MAX], n, v;
-    double clk;
-    clock_t starttime, endtime;
-
-    printf("\nEnter number of vertices: ");
-    scanf("%d", &n);
-    printf("\nEnter the cost of adjacency matrix (enter %d for infinity)\n", INF);
-    for (i = 1; i <= n; i++) {
-        for (j = 1; j <= n; j++) {
-            scanf("%d", &cost[i][j]);
-        }
-    }
-    printf("\nEnter the source vertex: ");
-    scanf("%d", &v);
-
-    starttime = clock();
-    spath(v, cost, dist, n);
-    endtime = clock();
-
-    printf("\nShortest distance\n");
-    for (i = 1; i <= n; i++) {
-        if (dist[i] == INF) {
-            printf("\n%d to %d = INF", v, i);
-        } else {
-            printf("\n%d to %d = %d", v, i, dist[i]);
-        }
-    }
-    clk = (double)(endtime - starttime) / CLOCKS_PER_SEC;
-    printf("\nThe time taken is %f seconds\n", clk);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#include<stdio.h>
-#include<time.h>
-double clk;
-clock_t starttime,endtime;
-
-int min(int a,int b)
 {
-	if(a<b)
-	return a;
-	else
-	return b;
+if ($1 == "d" && $5 == "tcp")
+	tcp_count++;
+if ($1 == "d" && $5 =="cbr")
+	udp_count++;
+}
+END{
+printf("tcp-count=%d\n",tcp_count);
+printf("udp_count=%d\n",udp_count);
+	
 }
 
-void floyd(int n,int W[10][10],int D[10][10])
+
+#2nd pg
+set ns [new Simulator]
+set nf [open pro2.nam w]
+set tf [open pro2.tr w]
+set cwind [open win2.tr w]
+$ns color 1 Blue
+$ns color 2 Red
+$ns namtrace-all $nf
+$ns trace-all $tf
+set n0 [$ns node]
+set n1 [$ns node]
+set n2 [$ns node]
+set n3 [$ns node]
+set n4 [$ns node]
+set n5 [$ns node]
+$ns duplex-link $n0 $n2 2Mb 2ms DropTail
+$ns duplex-link $n1 $n2 2Mb 2ms DropTail
+$ns duplex-link $n2 $n3 0.4Mb 5ms DropTail
+$ns duplex-link $n3 $n4 2Mb 2ms DropTail
+$ns duplex-link $n3 $n5 2Mb 2ms DropTail
+$ns queue-limit $n2 $n3 10
+set tcp1 [new Agent/TCP]
+set sink1 [new Agent/TCPSink]
+set ftp1 [new Application/FTP]
+$ns attach-agent $n0 $tcp1
+$ns attach-agent $n5 $sink1
+$ns connect $tcp1 $sink1
+$ftp1 attach-agent $tcp1
+$ns at 1.2 "$ftp1 start"
+set tcp2 [new Agent/TCP]
+set sink2 [new Agent/TCPSink]
+set telnet1 [new Application/Telnet]
+$ns attach-agent $n1 $tcp2
+$ns attach-agent $n4 $sink2
+$ns connect $tcp2 $sink2
+$telnet1 attach-agent $tcp2
+
+$ns at 5.1 "$telnet1 start"
+
+$ns at 5.0 "$ftp1 stop"
+
+$ns at 10.0 "finish"
+
+proc plotWindow {tcpSource file} {
+
+global ns
+
+set time 0.01
+
+set now [$ns now]
+set cwind [$tcpSource set cwnd_]
+puts $file "$now $cwind"
+$ns at [expr $now+$time] "plotWindow $tcpSource $file"
+}
+$ns at 2.0 "plotWindow $tcp1 $cwind"
+$ns at 5.5 "plotWindow $tcp2 $cwind"
+proc finish {} {
+global ns tf nf cwind
+$ns flush-trace
+close $tf
+close $nf
+puts "running..."
+exec nam pro2.nam &
+exec xgraph win2.tr &
+exit 0
+}
+
+
+p3
+set ns [new Simulator]
+
+set tf [open p2.tr w]
+$ns trace-all $tf
+
+set nf [open p2.nam w]
+$ns namtrace-all $nf
+
+set cwnd [open win3.tr w]
+
+$ns color 1 Blue
+$ns color 2 Red
+$ns rtproto DV
+
+set n0 [$ns node]
+set n1 [$ns node]
+set n2 [$ns node]
+set n3 [$ns node]
+set n4 [$ns node]
+set n5 [$ns node]
+$ns duplex-link $n0 $n1 0.3Mb 10ms DropTail
+$ns duplex-link $n0 $n2 0.3Mb 10ms DropTail
+$ns duplex-link $n1 $n4 0.3Mb 10ms DropTail
+$ns duplex-link $n2 $n3 0.3Mb 10ms DropTail
+$ns duplex-link $n3 $n5 0.3Mb 10ms DropTail
+$ns duplex-link $n4 $n5 0.3Mb 10ms DropTail
+
+$ns duplex-link-op $n0 $n1 orient right-up
+$ns duplex-link-op $n0 $n2 orient right-down
+$ns duplex-link-op $n2 $n3 orient right
+$ns duplex-link-op $n1 $n4 orient right
+$ns duplex-link-op $n3 $n5 orient right-up
+$ns duplex-link-op $n4 $n5 orient right-down
+
+set tcp [new Agent/TCP]
+$ns attach-agent $n0 $tcp
+
+set sink [new Agent/TCPSink]
+$ns attach-agent $n5 $sink
+
+$ns connect $tcp $sink
+$tcp set fid_ 1
+
+set ftp [new Application/FTP]
+$ftp attach-agent $tcp
+
+$ns rtmodel-at 1.0 down $n1 $n4
+$ns rtmodel-at 3.0 up $n1 $n4
+
+
+$ns at 0.1 "$ftp start"
+$ns at 12.0 "finish"
+
+proc plotWindow {tcpSource file} {
+     global ns
+     set time 0.01
+     set now [$ns now]
+     set cwnd [$tcpSource set cwnd_]
+     puts $file "$now $cwnd"
+     $ns at [expr $now+$time] "plotWindow $tcpSource $file"
+}
+
+$ns at 1.0 "plotWindow $tcp $cwnd"
+
+proc finish {} {
+     global ns tf nf cwnd
+     $ns flush-trace
+     close $tf
+     close $nf
+     exec nam p2.nam &
+     exec xgraph win3.tr &
+     exit 0
+}
+
+
+
+
+
+
+PROGRAM 4
+
+set ns [new Simulator]
+
+set tf [open program4.tr w]
+$ns trace-all $tf
+
+set nf [open program4.nam w]
+$ns namtrace-all $nf
+
+set s [$ns node]
+set c [$ns node]
+
+$ns color 1 Blue
+
+$s label "Server"
+$c label "Client"
+
+$ns duplex-link $s $c 10Mb 22ms DropTail
+$ns duplex-link-op $s $c orient right
+
+set tcp0 [new Agent/TCP]
+$ns attach-agent $s $tcp0
+$tcp0 set packetSize_ 1500
+
+set sink0 [new Agent/TCPSink]
+$ns attach-agent $c $sink0
+
+$ns connect $tcp0 $sink0
+
+set ftp0 [new Application/FTP]
+$ftp0 attach-agent $tcp0
+
+$tcp0 set fid_ 1
+
+proc finish {} {
+	global ns tf nf
+	$ns flush-trace
+	close $tf
+	close $nf
+	exec nam program4.nam &
+	exec awk -f ex5transfer.awk program4.tr &
+	exec awk -f ex5convert.awk program4.tr>convert.tr &
+	exec xgraph convert.tr &
+	}
+$ns at 0.01 "$ftp0 start"
+$ns at 15.0 "$ftp0 stop"
+$ns at 15.1 "finish"
+$ns run
+BEGIN{
+	count = 0;
+	time = 0;
+	total_bytes_sent = 0;
+	total_bytes_received = 0;
+	}
 {
-   	int i,j,k;
-	for(i=0;i<n;i++)
-	for(j=0;j<n;j++)
-	D[i][j]=W[i][j];
-	for(k=0;k<n;k++)
+	if ($1 == "r" && $4 == 1 && $5 == "tcp")
+		total_bytes_received += $6;
+	if ($1 == "+" && $3 == 0 && $5 == "tcp")
+		total_bytes_sent += $6;
+}
+END{
+	system("clear");
+	printf("\n Transmission time required to transfer file is %f", $2);
+	printf("\n Actual data sent from the server is %f Mbps", (total_bytes_sent)/1000000);
+	printf("\n Data received by the client is %f Mbps \n", (total_bytes_received)/1000000);
+}
+	
+BEGIN{
+	count = 0;
+	time = 0;
+	}
+{
+	if($1 == "r" && $4 == 1 && $5 == "tcp")
 	{
-		for(i=0;i<n;i++)
-		{
-			for(j=0;j<n;j++)
-			{
-				D[i][j]=min(D[i][j],D[i][k]+D[k][j]);
-			}
-		}
+		count += $6;
+		time = $2;
+		printf("\n %f \t %f", time, (count)/1000000);
 	}
 }
-
-void main()
-{
-	int i,j,n,D[10][10],W[10][10];
-	printf("Enter no.of vertices: \n");
-	scanf("%d",&n);
-	printf("Enter the cost matrix: \n");
-	for(i=0;i<n;i++)
-	for(j=0;j<n;j++)
-	scanf("%d",&W[i][j]);
-	starttime=clock();
-            floyd(n,W,D);	
-endtime=clock();
-clk=(double)(endtime-starttime)/CLOCKS_PER_SEC;
- printf("All pair shortest path matrix is\n");
-	for(i=0;i<n;i++)
-	{
-		for(j=0;j<n;j++)
-		{
-			printf("%d\t",D[i][j]);
-		}
-	}
-   printf("\nThe run time is %f\n",clk);
+END{
 }
 
 
@@ -376,584 +301,121 @@ clk=(double)(endtime-starttime)/CLOCKS_PER_SEC;
 
 
 
+PROGRAM 5
+
+set ns [new Simulator -multicast on]
+
+set tf [open mcast.tr w]
+$ns trace-all $tf
+
+set fd [open mcast.nam w]
+$ns namtrace-all $fd
+
+set n0 [$ns node]
+set n1 [$ns node]
+set n2 [$ns node]
+set n3 [$ns node]
+set n4 [$ns node]
+set n5 [$ns node]
+set n6 [$ns node]
+set n7 [$ns node]
+
+$ns duplex-link $n0 $n2 1.5Mb 10ms DropTail
+$ns duplex-link $n1 $n2 1.5Mb 10ms DropTail
+$ns duplex-link $n2 $n3 1.5Mb 10ms DropTail
+$ns duplex-link $n3 $n4 1.5Mb 10ms DropTail
+$ns duplex-link $n3 $n7 1.5Mb 10ms DropTail
+$ns duplex-link $n4 $n5 1.5Mb 10ms DropTail
+$ns duplex-link $n4 $n6 1.5Mb 10ms DropTail
+
+set mproto DM
+set mrthandle [$ns mrtproto $mproto {}]
+
+set group1 [Node allocaddr]
+set group2 [Node allocaddr]
+
+set udp0 [new Agent/UDP]
+$ns attach-agent $n0 $udp0
+$udp0 set dst_addr_ $group1
+$udp0 set dst_port_ 0
+set cbr1 [new Application/Traffic/CBR]
+$cbr1 attach-agent $udp0
+
+set udp1 [new Agent/UDP]
+$ns attach-agent $n1 $udp1
+$udp1 set dst_addr_ $group2
+$udp1 set dst_port_ 0
+set cbr2 [new Application/Traffic/CBR]
+$cbr2 attach-agent $udp1
+
+set rvcr1 [new Agent/Null]
+$ns attach-agent $n5 $rvcr1
+$ns at 1.0 "$n5 join-group $rvcr1 $group1"
+
+set rvcr2 [new Agent/Null]
+$ns attach-agent $n6 $rvcr2
+$ns at 1.5 "$n6 join-group $rvcr2 $group1"
+
+set rvcr3 [new Agent/Null]
+$ns attach-agent $n7 $rvcr3
+$ns at 2.0 "$n7 join-group $rvcr3 $group1"
+
+set rvcr4 [new Agent/Null]
+$ns attach-agent $n5 $rvcr1
+$ns at 2.5 "$n5 join-group $rvcr4 $group2"
+
+set rvcr5 [new Agent/Null]
+$ns attach-agent $n6 $rvcr2
+$ns at 3.0 "$n6 join-group $rvcr5 $group2"
+
+set rvcr6 [new Agent/Null]
+$ns attach-agent $n7 $rvcr3
+$ns at 3.5 "$n7 join-group $rvcr6 $group2"
+
+$ns at 4.0 "$n5 leave-group $rvcr1 $group1"
+$ns at 4.5 "$n6 leave-group $rvcr2 $group1"
+$ns at 5.0 "$n7 leave-group $rvcr3 $group1"
+
+$ns at 5.5 "$n5 leave-group $rvcr4 $group2"
+$ns at 6.0 "$n6 leave-group $rvcr5 $group2"
+$ns at 6.5 "$n7 leave-group $rvcr6 $group2"
+
+$ns at 0.5 "$cbr1 start"
+$ns at 9.5 "$cbr1 stop"
+
+$ns at 0.5 "$cbr2 start"
+$ns at 9.5 "$cbr2 stop"
+
+$ns at 10.0 "finish"
+
+$n0 label "Source 1"
+
+$n1 label "Source 2"
+
+$ns color 1 pink
+$ns color 2 purple
+
+$n5 label "Receiver 1"
+$n5 color violet
+
+$n6 label "Receiver 2"
+$n6 color violet
+
+$n7 label "Receiver 3"
+$n7 color violet
+
+$udp0 set fid_ 1
+$udp1 set fid_ 2
 
 
-
-#include <stdio.h>
-#include <time.h>
-
-// Function declarations
-int max(int x, int y);
-int knap(int n, int w[], int value[], int m, int v[][10]);
-
-int main() {
-    clock_t starttime, endtime;
-    double clk;
-    int v[10][10], n, i, j, w[10], value[10], m, result;
-
-    printf("Enter the number of items:");
-    scanf("%d", &n);
-
-    printf("Enter the weights of %d items:\n", n);
-    for (i = 0; i < n; i++) {
-        scanf("%d", &w[i]);
-    }
-
-    printf("Enter the value of %d items:\n", n);
-    for (i = 0; i < n; i++) {
-        scanf("%d", &value[i]);
-    }
-
-    printf("Enter the capacity of the knapsack:");
-    scanf("%d", &m);
-
-    // Initialize the table v
-    for (i = 0; i <= n; i++) {
-        for (j = 0; j <= m; j++) {
-            v[i][j] = 0;
-        }
-    }
-
-    starttime = clock();
-    result = knap(n, w, value, m, v);
-    endtime = clock();
-    clk = (double)(endtime - starttime) / CLOCKS_PER_SEC;
-
-    printf("Optimal solution for the knapsack problem is %d\n", v[n][m]);
-    printf("Time taken: %f seconds\n", clk);
-
-    return 0;
+proc finish {} {
+global ns tf fd
+$ns flush-trace
+close $tf
+close $fd
+puts "running nam..."
+exec nam mcast.nam &
+exit 0
 }
 
-// Function to find maximum of two integers
-int max(int x, int y) {
-    return (x > y) ? x : y;
-}
-
-// Function to solve knapsack problem using dynamic programming
-int knap(int n, int w[], int value[], int m, int v[][10]) {
-    int i, j;
-
-    for (i = 0; i <= n; i++) {
-        for (j = 0; j <= m; j++) {
-            if (i == 0 || j == 0)
-                v[i][j] = 0;
-            else if (j < w[i - 1])
-                v[i][j] = v[i - 1][j];
-            else
-                v[i][j] = max(v[i - 1][j], value[i - 1] + v[i - 1][j - w[i - 1]]);
-        }
-    }
-
-    // Print the table for solving knapsack problem
-    printf("\nThe table for solving knapsack problem using dynamic programming is:\n");
-    for (i = 0; i <= n; i++) {
-        for (j = 0; j <= m; j++) {
-            printf("%d\t", v[i][j]);
-        }
-        printf("\n");
-    }
-
-    return v[n][m];
-}
-
-
-
-
-
-
-
-
-
-#binary search
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-// Recursive binary search function
-int binarySearch(int arr[], int low, int high, int target) {
-    if (high >= low) {
-        int mid = low + (high - low) / 2;
-
-        // If the element is present at the middle itself
-        if (arr[mid] == target)
-            return mid;
-
-        // If the element is smaller than the middle element, then it can only be present in the left subarray
-        if (arr[mid] > target)
-            return binarySearch(arr, low, mid - 1, target);
-
-        // Else the element can only be present in the right subarray
-        return binarySearch(arr, mid + 1, high, target);
-    }
-
-    // Element is not present in the array
-    return -1;
-}
-
-int main() {
-    int size;
-    printf("Enter the size of the sorted array: ");
-    scanf("%d", &size);
-
-    int arr[size];
-
-    printf("Enter the sorted array elements:\n");
-    for (int i = 0; i < size; i++) {
-        scanf("%d", &arr[i]);
-    }
-
-    int target;
-    printf("Enter the target element to search for: ");
-    scanf("%d", &target);
-
-    // Calculate time taken by binarySearch function
-    clock_t start, end;
-    double cpu_time_used;
-
-    start = clock();
-    int result = binarySearch(arr, 0, size - 1, target);
-    end = clock();
-
-    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-
-    if (result != -1)
-        printf("Element %d found at index %d.\n", target, result);
-    else
-        printf("Element %d not found in the array.\n", target);
-
-    printf("Time taken by binarySearch function: %f seconds\n", cpu_time_used);
-
-    return 0;
-}
-
-
-
-
-
-
-
-
-
-#insertion sort
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-void insertionSort(int array[], int size) {
-    for (int i = 1; i < size; i++) {
-        int key = array[i];
-        int j = i - 1;
-        while (j >= 0 && array[j] > key) {
-            array[j + 1] = array[j];
-            j = j - 1;
-        }
-        array[j + 1] = key;
-    }
-}
-
-void printArray(int array[], int size) {
-    for (int i = 0; i < size; i++) {
-        printf("%d ", array[i]);
-    }
-    printf("\n");
-}
-
-int main() {
-    int size;
-
-    srand(time(NULL));
-
-    printf("Enter the number of elements: ");
-    scanf("%d", &size);
-
-    int data[size];
-    for (int i = 0; i < size; i++) {
-        data[i] = rand() % 100;
-    }
-
-    printf("Unsorted array:\n");
-    printArray(data, size);
-
-    clock_t start_time = clock();
-    insertionSort(data, size);
-    clock_t end_time = clock();
-
-    double time_taken = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-
-    printf("Sorted array:\n");
-    printArray(data, size);
-
-    printf("Time taken to sort the array: %f seconds\n", time_taken);
-
-    return 0;
-}
-
-
-
-
-
-
-
-
-
-#merge sort
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-// Function to merge two subarrays of arr[]
-void merge(int arr[], int l, int m, int r) {
-    int i, j, k;
-    int n1 = m - l + 1;
-    int n2 = r - m;
-
-    // Create temporary arrays 
-    int L[n1], R[n2];
-
-    // Copy data to temporary arrays L[] and R[]
-    for (i = 0; i < n1; i++)
-        L[i] = arr[l + i];
-    for (j = 0; j < n2; j++)
-        R[j] = arr[m + 1 + j];
-
-    // Merge the temporary arrays back into arr[l..r]
-    i = 0;
-    j = 0;
-    k = l;
-    while (i < n1 && j < n2) {
-        if (L[i] <= R[j]) {
-            arr[k] = L[i];
-            i++;
-        } else {
-            arr[k] = R[j];
-            j++;
-        }
-        k++;
-    }
-
-    // Copy the remaining elements of L[], if there are any
-    while (i < n1) {
-        arr[k] = L[i];
-        i++;
-        k++;
-    }
-
-    // Copy the remaining elements of R[], if there are any
-    while (j < n2) {
-        arr[k] = R[j];
-        j++;
-        k++;
-    }
-}
-
-// Recursive function to perform merge sort
-void mergeSort(int arr[], int l, int r) {
-    if (l < r) {
-        // Same as (l+r)/2, but avoids overflow for large l and h
-        int m = l + (r - l) / 2;
-
-        // Sort first and second halves
-        mergeSort(arr, l, m);
-        mergeSort(arr, m + 1, r);
-
-        // Merge the sorted halves
-        merge(arr, l, m, r);
-    }
-}
-
-int main() {
-    int n;
-    printf("Enter the size of the array: ");
-    scanf("%d", &n);
-
-    // Generate random input
-    int arr[n];
-    srand(time(0));
-    printf("Generated array: ");
-    for (int i = 0; i < n; i++) {
-        arr[i] = rand() % 1000; // Generate random numbers between 0 and 999
-        printf("%d ", arr[i]);
-    }
-    printf("\n");
-
-    // Calculate time taken by mergeSort function
-    clock_t start, end;
-    double cpu_time_used;
-
-    start = clock();
-    mergeSort(arr, 0, n - 1);
-    end = clock();
-
-    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    printf("Sorted array: ");
-    for (int i = 0; i < n; i++) {
-        printf("%d ", arr[i]);
-    }
-    printf("\n");
-    printf("Time taken by mergeSort function: %f seconds\n", cpu_time_used);
-
-    return 0;
-}
-
-
-
-
-
-
-#quick sort
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-// Function to swap two elements
-void swap(int* a, int* b) {
-    int temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
-// Partition function to find the partitioning index
-int partition(int arr[], int low, int high) {
-    int pivot = arr[high]; // Choosing the last element as the pivot
-    int i = (low - 1); // Index of the smaller element
-
-    for (int j = low; j <= high - 1; j++) {
-        // If current element is smaller than the pivot
-        if (arr[j] < pivot) {
-            i++; // Increment index of smaller element
-            swap(&arr[i], &arr[j]);
-        }
-    }
-    swap(&arr[i + 1], &arr[high]);
-    return (i + 1);
-}
-
-// Recursive Quick Sort function
-void quickSort(int arr[], int low, int high) {
-    if (low < high) {
-        // Find partitioning index
-        int p = partition(arr, low, high);
-
-        // Recursively sort elements before and after partition
-        quickSort(arr, low, p - 1);
-        quickSort(arr, p + 1, high);
-    }
-}
-
-int main() {
-    int size;
-    printf("Enter the size of the array: ");
-    scanf("%d", &size);
-
-    int arr[size];
-
-    // Generate random input
-    srand(time(0));
-    printf("Generated array: ");
-    for (int i = 0; i < size; i++) {
-        arr[i] = rand() % 1000; // Generate random numbers between 0 and 999
-        printf("%d ", arr[i]);
-    }
-    printf("\n");
-
-    // Calculate time taken by quickSort function
-    clock_t start, end;
-    double cpu_time_used;
-
-    start = clock();
-    quickSort(arr, 0, size - 1);
-    end = clock();
-
-    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-
-    printf("\nSorted array: ");
-    for (int i = 0; i < size; i++) {
-        printf("%d ", arr[i]);
-    }
-    printf("\n");
-    printf("\nTime taken by quickSort function: %f seconds\n", cpu_time_used);
-
-    return 0;
-}
-
-
-
-
-
-#heap sort
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-void swap(int* a, int* b) {
-    int temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
-void heapify(int arr[], int n, int i) {
-    int largest = i;
-    int left = 2 * i + 1;
-    int right = 2 * i + 2;
-
-    if (left < n && arr[left] > arr[largest])
-        largest = left;
-
-    if (right < n && arr[right] > arr[largest])
-        largest = right;
-
-    if (largest != i) {
-        swap(&arr[i], &arr[largest]);
-        heapify(arr, n, largest);
-    }
-}
-
-void heapSort(int arr[], int n) {
-    for (int i = n / 2 - 1; i >= 0; i--)
-        heapify(arr, n, i);
-
-    for (int i = n - 1; i > 0; i--) {
-        swap(&arr[0], &arr[i]);
-        heapify(arr, i, 0);
-    }
-}
-
-int main() {
-    int size;
-    printf("Enter the size of the array: ");
-    scanf("%d", &size);
-
-    int arr[size];
-
-    srand(time(0));
-    printf("Generated array: ");
-    for (int i = 0; i < size; i++) {
-        arr[i] = rand() % 1000;
-        printf("%d ", arr[i]);
-    }
-    printf("\n");
-
-    clock_t start, end;
-    double cpu_time_used;
-
-    start = clock();
-    heapSort(arr, size);
-    end = clock();
-
-    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-
-    printf("\nSorted array: ");
-    for (int i = 0; i < size; i++) {
-        printf("%d ", arr[i]);
-    }
-    printf("\n");
-    printf("\nTime taken by heapSort function: %f seconds\n", cpu_time_used);
-
-    return 0;
-}
-
-#bfs
-#include<stdio.h>
-#include<time.h>
-
-void bfs(int a[10][10], int n, int source) {
-    int s[10], q[10], f = 0, r = -1, t, v;
-    for (v = 0; v < n; v++) {
-        s[v] = 0;
-    }
-    q[++r] = source;
-    s[source] = 1;
-    while (f <= r) {
-        t = q[f++];
-        for (v = 0; v < n; v++) {
-            if (a[t][v] == 1 && s[v] == 0) {
-                q[++r] = v;
-                printf("The BFS traversal is: %d %d\n", t, v);
-                s[v] = 1;
-            }
-        }
-    }
-}
-
-int main() {
-    int a[10][10], n, i, j, s;
-    double clk;
-    clock_t starttime, endtime;
-    printf("Enter the number of cities\n");
-    scanf("%d", &n);
-    printf("Enter the matrix representation:\n");
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < n; j++) {
-            scanf("%d", &a[i][j]);
-        }
-    }
-    printf("Enter the source city\n");
-    scanf("%d", &s);
-    starttime = clock();
-    bfs(a, n, s);
-    endtime = clock();
-    clk = (double)(endtime - starttime) / CLOCKS_PER_SEC;
-    printf("\nThe run time is %f\n", clk);
-    return 0;
-}
-
-
-#dfs
-#include <stdio.h>
-#include <time.h>
-
-#define MAX 50
-
-int n, a[MAX][MAX], visited[MAX];
-
-void DFS(int v);
-
-int main() {
-    int v;
-    double clk;
-    clock_t starttime, endtime;
-
-    printf("\n\t\t\t DEPTH FIRST SEARCH \n");
-    printf("\n Enter number of Lands to be surveyed: ");
-    scanf("%d", &n);
-
-    for (int i = 0; i < n; i++) {
-        visited[i] = 0;
-    }
-
-    printf("\n Enter the adjacency matrix (%d x %d) row-wise (0/1):\n", n, n);
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            scanf("%d", &a[i][j]);
-        }
-    }
-
-    printf("\n Enter the starting Land number: ");
-    scanf("%d", &v);
-    v = v - 1;
-
-    starttime = clock();
-    printf("The DFS traversal is:\n");
-    DFS(v);
-    endtime = clock();
-
-    clk = (double)(endtime - starttime) / CLOCKS_PER_SEC;
-
-    printf("\nThe run time is %f seconds\n", clk);
-
-    return 0;
-}
-
-void DFS(int i) {
-    printf("%d ", i + 1);
-    visited[i] = 1;
-    for (int j = 0; j < n; j++) {
-        if (a[i][j] == 1 && !visited[j]) {
-            DFS(j);
-        }
-    }
-}
-
-
-
+$ns run
